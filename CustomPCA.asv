@@ -1,0 +1,275 @@
+%% Scenario 1: Dominance by Sample Size (n=400 vs n=20)
+%-------------------------------------------------------%
+clear;
+clc;
+close all;
+
+rng(42); 
+
+% --- 1. Define Subgroups ---
+n_A1 = 400;
+mu_A1 = [0, 0]; % Center at origin
+sigma_A1 = [10, 0; 0, 1]; 
+
+% Subgroup B (Underrepresented): n=10, "small"
+n_B1 = 100;
+mu_B1 = [0,0]
+sigma_B1 = [1, 0; 0, 10]; % A small, tightly correlated cluster
+% This is the Covarience Matrix, where the diag entires
+% Tells is how spread out the data points are along that coordiante
+% The off diagonal  
+
+% --- 2. Generate Data ---
+groupA_S1 = mvnrnd(mu_A1, sigma_A1, n_A1);
+groupB_S1 = mvnrnd(mu_B1, sigma_B1, n_B1);
+
+% Combine into one "global" dataset
+data_S1 = [groupA_S1; groupB_S1];
+
+% --- 3. Perform Global PCA ---
+[coeff_S1, ~, latent_S1] = pca(data_S1);
+
+% --- 4. Plot Scenario 1 ---
+figure('Position', [100, 100, 700, 600]); 
+hold on; 
+
+% Plot the scatter points
+scatter(groupA_S1(:, 1), groupA_S1(:, 2), 30, 'filled', 'MarkerFaceAlpha', 0.5, 'DisplayName', 'Subgroup A (n=400)');
+scatter(groupB_S1(:, 1), groupB_S1(:, 2), 30, 'filled', 'MarkerFaceAlpha', 0.7, 'DisplayName', 'Subgroup B (n=100)');
+
+% --- 5. Plot Principal Components ---
+mean_S1 = mean(data_S1)
+
+% When PCA finds the PC those axes are only meaningful relative to the
+% center of the data so we need to find the center of our new data set
+
+
+
+% Scale vectors by 3x their standard deviation (sqrt of eigenvalue)
+pc1_S1 = coeff_S1(:, 1) * 3 * sqrt(latent_S1(1));
+pc2_S1 = coeff_S1(:, 2) * 3 * sqrt(latent_S1(2));
+
+% sqrt(latent_S1(1)) represens the varience alomg the cimponnen to gfet
+% standaded deviation we need to sqrt  whihc we mulit[ly by 3 folliwng th
+% 3 -sigma rile you are drawing a line that visually represents the full "spread" (covering 99.7%) of your data along that principal axis.
+% Not scalling it would make pca compoennets to small 
+
+% Draw PC1 and PC2 using quiver
+q1 = quiver(mean_S1(1), mean_S1(2), pc1_S1(1), pc1_S1(2), 0, 'k', 'LineWidth', 2.5, 'MaxHeadSize', 0.4, 'DisplayName', 'Global PC1');
+q2 = quiver(mean_S1(1), mean_S1(2), pc2_S1(1), pc2_S1(2), 0, 'k', 'LineWidth', 1.5, 'LineStyle', ':', 'DisplayName', 'Global PC2');
+
+% quiver is the name of a plotting function above its saying 
+% strats at the x and y axis of our dataset mean, and extend towards the x
+% vector from pc1(1) and y vector pc1(2)
+
+% --- 6. (Optional) Plot "Ideal" PCs for Subgroup A ---
+[coeff_A_ideal, ~, latent_A_ideal] = pca(groupA_S1);
+mean_A1 = mean(groupA_S1);
+pc1_A_ideal = coeff_A_ideal(:, 1) * 3 * sqrt(latent_A_ideal(1));
+pc2_A_ideal = coeff_A_ideal(:, 2) * 3 * sqrt(latent_A_ideal(2));
+
+q3 = quiver(mean_A1(1), mean_A1(2), pc1_A_ideal(1), pc1_A_ideal(2), 0, 'y', 'LineWidth', 1.5, 'LineStyle', '--', 'DisplayName', 'Subgroup A Ideal PC1');
+quiver(mean_A1(1), mean_A1(2), pc2_A_ideal(1), pc2_A_ideal(2), 0, 'y', 'LineWidth', 1.5, 'LineStyle', '--', 'HandleVisibility', 'off');
+
+
+% --- 7. (Optional) Plot "Ideal" PCs for Subgroup B ---
+[coeff_B_ideal, ~, latent_B_ideal] = pca(groupB_S1);
+mean_B1 = mean(groupB_S1);
+pc1_B_ideal = coeff_B_ideal(:, 1) * 3 * sqrt(latent_B_ideal(1));
+pc2_B_ideal = coeff_B_ideal(:, 2) * 3 * sqrt(latent_B_ideal(2));
+
+q4 = quiver(mean_B1(1), mean_B1(2), pc1_B_ideal(1), pc1_B_ideal(2), 0, 'r', 'LineWidth', 1.5, 'LineStyle', '--', 'DisplayName', 'Subgroup B Ideal PC1');
+quiver(mean_B1(1), mean_B1(2), pc2_B_ideal(1), pc2_B_ideal(2), 0, 'r', 'LineWidth', 1.5, 'LineStyle', '--', 'HandleVisibility', 'off');
+
+
+% --- 7. Final Plotting Touches ---
+axis equal; 
+grid on;
+title('Scenario 1: Dominance by Sample Size (n=400 vs n=100)', 'FontSize', 14);
+xlabel('Feature 1', 'FontSize', 12);
+ylabel('Feature 2', 'FontSize', 12);
+legend('Location', 'northwest', 'FontSize', 10);
+hold off;
+
+
+print('scenario1', '-dpng', '-r300');
+%% Scenario 2: Same Sample Size but one is more clustered together
+%-------------------------------------------------------%
+clear;
+clc;
+close all;
+
+rng(42); 
+
+% --- 1. Define Subgroups ---
+n_A1 = 500;
+mu_A1 = [0, 0]; % Center at origin
+sigma_A1 = [5, 0; 0, 5];  %% <-- CHANGE: Made this large and tilted to be "dominant"
+
+n_B1 = 500;
+mu_B1 = [0,0]; % Centered far away from Subgroup A
+
+sigma_B1 = [0.2, 0; 0, 0.2];
+
+
+groupA_S1 = mvnrnd(mu_A1, sigma_A1, n_A1);
+groupB_S1 = mvnrnd(mu_B1, sigma_B1, n_B1);
+
+% Combine into one "global" dataset
+data_S1 = [groupA_S1; groupB_S1];
+
+% --- 3. Perform Global PCA ---
+[coeff_S1, ~, latent_S1] = pca(data_S1);
+
+% --- 4. Plot Scenario 1 ---
+figure('Position', [100, 100, 700, 600]); 
+hold on; 
+
+% Plot the scatter points
+scatter(groupA_S1(:, 1), groupA_S1(:, 2), 30, 'filled', 'MarkerFaceAlpha', 0.5, 'DisplayName', 'Subgroup A (n=500)');
+scatter(groupB_S1(:, 1), groupB_S1(:, 2), 30, 'filled', 'MarkerFaceAlpha', 0.7, 'DisplayName', 'Subgroup B (n=500)');
+
+% --- 5. Plot Principal Components ---
+mean_S1 = mean(data_S1);
+
+pc1_S1 = coeff_S1(:, 1) * 3 * sqrt(latent_S1(1));
+pc2_S1 = coeff_S1(:, 2) * 3 * sqrt(latent_S1(2));
+
+
+% Draw PC1 and PC2 using quiver
+q1 = quiver(mean_S1(1), mean_S1(2), pc1_S1(1), pc1_S1(2), 0, 'k', 'LineWidth', 2.5, 'MaxHeadSize', 0.4, 'DisplayName', 'Global PC1');
+q2 = quiver(mean_S1(1), mean_S1(2), pc2_S1(1), pc2_S1(2), 0, 'k', 'LineWidth', 1.5, 'LineStyle', ':', 'DisplayName', 'Global PC2');
+
+[coeff_A_ideal, ~, latent_A_ideal] = pca(groupA_S1);
+mean_A1 = mean(groupA_S1);
+pc1_A_ideal = coeff_A_ideal(:, 1) * 3 * sqrt(latent_A_ideal(1));
+pc2_A_ideal = coeff_A_ideal(:, 2) * 3 * sqrt(latent_A_ideal(2));
+
+q3 = quiver(mean_A1(1), mean_A1(2), pc1_A_ideal(1), pc1_A_ideal(2), 0, 'y', 'LineWidth', 1.5, 'LineStyle', '--', 'DisplayName', 'Subgroup A Ideal PC1');
+quiver(mean_A1(1), mean_A1(2), pc2_A_ideal(1), pc2_A_ideal(2), 0, 'y', 'LineWidth', 1.5, 'LineStyle', '--', 'HandleVisibility', 'off');
+
+
+% --- 7. (Optional) Plot "Ideal" PCs for Subgroup B ---
+[coeff_B_ideal, ~, latent_B_ideal] = pca(groupB_S1);
+mean_B1 = mean(groupB_S1);
+pc1_B_ideal = coeff_B_ideal(:, 1) * 3 * sqrt(latent_B_ideal(1));
+pc2_B_ideal = coeff_B_ideal(:, 2) * 3 * sqrt(latent_B_ideal(2));
+
+q4 = quiver(mean_B1(1), mean_B1(2), pc1_B_ideal(1), pc1_B_ideal(2), 0, 'r', 'LineWidth', 1.5, 'LineStyle', '--', 'DisplayName', 'Subgroup B Ideal PC1');
+quiver(mean_B1(1), mean_B1(2), pc2_B_ideal(1), pc2_B_ideal(2), 0, 'r', 'LineWidth', 1.5, 'LineStyle', '--', 'HandleVisibility', 'off');
+
+
+% --- 7. Final Plotting Touches ---
+axis equal; 
+grid on;
+title('Test 2: Dominance by Internal Variance (Shared Mean)', 'FontSize', 14);
+xlabel('Feature 1', 'FontSize', 12);
+ylabel('Feature 2', 'FontSize', 12);
+legend('Location', 'northwest', 'FontSize', 10);
+hold off;
+
+print('scenario2', '-dpng', '-r300');
+%% Scenario 3: High Between group varience
+%-------------------------------------------------------%
+clear;
+clc;
+close all;
+
+rng(42); 
+
+% --- 1. Define Subgroups ---
+n_A1 = 500;
+mu_A1 = [0, 0]; % Center at origin
+sigma_A1 = [4, 0; 0, 10];  %% <-- CHANGE: Made this large and tilted to be "dominant"
+
+n_B1 = 500;
+mu_B1 = [15,10]; % Centered far away from Subgroup A
+
+sigma_B1 = [10, 0; 0, 4];
+
+
+groupA_S1 = mvnrnd(mu_A1, sigma_A1, n_A1);
+groupB_S1 = mvnrnd(mu_B1, sigma_B1, n_B1);
+
+% Combine into one "global" dataset
+data_S1 = [groupA_S1; groupB_S1];
+
+% --- 3. Perform Global PCA ---
+[coeff_S1, ~, latent_S1] = pca(data_S1);
+
+% --- 4. Plot Scenario 1 ---
+figure('Position', [100, 100, 700, 600]); 
+hold on; 
+
+% Plot the scatter points
+scatter(groupA_S1(:, 1), groupA_S1(:, 2), 30, 'filled', 'MarkerFaceAlpha', 0.5, 'DisplayName', 'Subgroup A (n=500)');
+scatter(groupB_S1(:, 1), groupB_S1(:, 2), 30, 'filled', 'MarkerFaceAlpha', 0.7, 'DisplayName', 'Subgroup B (n=500)');
+
+% --- 5. Plot Principal Components ---
+mean_S1 = mean(data_S1);
+
+pc1_S1 = coeff_S1(:, 1) * 3 * sqrt(latent_S1(1));
+pc2_S1 = coeff_S1(:, 2) * 3 * sqrt(latent_S1(2));
+
+
+% Draw PC1 and PC2 using quiver
+q1 = quiver(mean_S1(1), mean_S1(2), pc1_S1(1), pc1_S1(2), 0, 'k', 'LineWidth', 2.5, 'MaxHeadSize', 0.4, 'DisplayName', 'Global PC1');
+q2 = quiver(mean_S1(1), mean_S1(2), pc2_S1(1), pc2_S1(2), 0, 'k', 'LineWidth', 1.5, 'LineStyle', ':', 'DisplayName', 'Global PC2');
+
+[coeff_A_ideal, ~, latent_A_ideal] = pca(groupA_S1);
+mean_A1 = mean(groupA_S1);
+pc1_A_ideal = coeff_A_ideal(:, 1) * 3 * sqrt(latent_A_ideal(1));
+pc2_A_ideal = coeff_A_ideal(:, 2) * 3 * sqrt(latent_A_ideal(2));
+
+q3 = quiver(mean_A1(1), mean_A1(2), pc1_A_ideal(1), pc1_A_ideal(2), 0, 'y', 'LineWidth', 1.5, 'LineStyle', '--', 'DisplayName', 'Subgroup A Ideal PC1');
+quiver(mean_A1(1), mean_A1(2), pc2_A_ideal(1), pc2_A_ideal(2), 0, 'y', 'LineWidth', 1.5, 'LineStyle', '--', 'HandleVisibility', 'off');
+
+
+% --- 7. (Optional) Plot "Ideal" PCs for Subgroup B ---
+[coeff_B_ideal, ~, latent_B_ideal] = pca(groupB_S1);
+mean_B1 = mean(groupB_S1);
+pc1_B_ideal = coeff_B_ideal(:, 1) * 3 * sqrt(latent_B_ideal(1));
+pc2_B_ideal = coeff_B_ideal(:, 2) * 3 * sqrt(latent_B_ideal(2));
+
+q4 = quiver(mean_B1(1), mean_B1(2), pc1_B_ideal(1), pc1_B_ideal(2), 0, 'r', 'LineWidth', 1.5, 'LineStyle', '--', 'DisplayName', 'Subgroup B Ideal PC1');
+quiver(mean_B1(1), mean_B1(2), pc2_B_ideal(1), pc2_B_ideal(2), 0, 'r', 'LineWidth', 1.5, 'LineStyle', '--', 'HandleVisibility', 'off');
+
+
+% --- 7. Final Plotting Touches ---
+axis equal; 
+grid on;
+title('Scenario 3: Dominance by Between-Group Variance', 'FontSize', 14);
+xlabel('Feature 1', 'FontSize', 12);
+ylabel('Feature 2', 'FontSize', 12);
+legend('Location', 'northwest', 'FontSize', 10);
+hold off;
+
+
+print('scenario3', '-dpng', '-r300');
+%% Scenario 1: With FAIRPCA
+clear;
+clc;
+close all;
+
+rng(42); 
+
+% --- 1. Define Subgroups ---
+n_A1 = 400;
+mu_A1 = [0, 0]; % Center at origin
+sigma_A1 = [10, 0; 0, 1]; 
+
+% Subgroup B (Underrepresented): n=10, "small"
+n_B1 = 100;
+mu_B1 = [0,0]
+sigma_B1 = [1, 0; 0, 10]; 
+
+
+% --- 2. Generate Data ---
+groupA_S1 = mvnrnd(mu_A1, sigma_A1, n_A1);
+groupB_S1 = mvnrnd(mu_B1, sigma_B1, n_B1);
+
+% Combine into one "global" dataset
+data_S1 = [groupA_S1; groupB_S1];
+
+size(groupA_S1)
+
